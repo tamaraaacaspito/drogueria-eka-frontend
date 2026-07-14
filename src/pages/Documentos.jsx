@@ -1,13 +1,13 @@
 /**
  * src/pages/Documentos.jsx
- * MÃ³dulo central de documentos operativos:
+ * Módulo central de documentos operativos:
  *   Tab 1 â€” Facturas (ventas a clientes)
- *   Tab 2 â€” GuÃ­as de RemisiÃ³n (despacho / reposiciÃ³n)
+ *   Tab 2 â€” GuÃ­as de Remisión (despacho / reposición)
  *   Tab 3 â€” Archivos adjuntos
  *
  * Reglas de negocio aplicadas:
  *   R1  â€” precio_unitario ingresado manualmente por transacciÃ³n
- *   R3  â€” una guÃ­a puede tener mÃºltiples lotes (multi-lÃ­nea)
+ *   R3  â€” una guÃ­a puede tener múltiples lotes (multi-lÃ­nea)
  *   R5A â€” guÃ­as de tipo REPOSICION no requieren factura vinculada
  */
 import React, { useState, useEffect, useCallback } from 'react';
@@ -53,20 +53,20 @@ function StatusBadge({ estado, map }) {
 }
 
 // â”€â”€ LÃ­nea de detalle (producto + lote + cantidad + precio) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-function LineaDetalle({ index, linea, productos, onChange, onRemove }) {
+function LineaDetalle({ index, línea, productos, onChange, onRemove }) {
     const [lotes, setLotes] = useState([]);
 
     useEffect(() => {
-        if (linea.producto_id) {
-            api.get(`/productos/${linea.producto_id}/lotes`)
+        if (línea.producto_id) {
+            api.get(`/productos/${línea.producto_id}/lotes`)
                 .then(r => setLotes(r.data || []))
                 .catch(() => setLotes([]));
         } else {
             setLotes([]);
         }
-    }, [linea.producto_id]);
+    }, [línea.producto_id]);
 
-    const set = (k, v) => onChange(index, { ...linea, [k]: v });
+    const set = (k, v) => onChange(index, { ...línea, [k]: v });
 
     return (
         <div className="grid grid-cols-12 gap-2 items-start p-3 bg-slate-50 rounded-xl border border-slate-100">
@@ -75,7 +75,7 @@ function LineaDetalle({ index, linea, productos, onChange, onRemove }) {
                 {index === 0 && <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Producto</p>}
                 <select
                     required
-                    value={linea.producto_id}
+                    value={línea.producto_id}
                     onChange={e => set('producto_id', e.target.value)}
                     className="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                 >
@@ -90,10 +90,10 @@ function LineaDetalle({ index, linea, productos, onChange, onRemove }) {
                 {index === 0 && <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Lote *</p>}
                 <select
                     required
-                    value={linea.lote_id}
+                    value={línea.lote_id}
                     onChange={e => set('lote_id', e.target.value)}
                     className="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 disabled:opacity-50"
-                    disabled={!linea.producto_id}
+                    disabled={!línea.producto_id}
                 >
                     <option value="">Seleccionar lote...</option>
                     {lotes.filter(l => Number(l.stock_actual ?? l.cantidad_producida) > 0).map(l => (
@@ -108,7 +108,7 @@ function LineaDetalle({ index, linea, productos, onChange, onRemove }) {
                 {index === 0 && <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Cant.</p>}
                 <input
                     required type="number" min="0.01" step="0.01"
-                    value={linea.cantidad}
+                    value={línea.cantidad}
                     onChange={e => set('cantidad', e.target.value)}
                     className="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                     placeholder="0"
@@ -119,7 +119,7 @@ function LineaDetalle({ index, linea, productos, onChange, onRemove }) {
                 {index === 0 && <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">P. Unit. (S/.)</p>}
                 <input
                     type="number" min="0" step="0.01"
-                    value={linea.precio_unitario}
+                    value={línea.precio_unitario}
                     onChange={e => set('precio_unitario', e.target.value)}
                     className="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                     placeholder="0.00"
@@ -160,7 +160,7 @@ function TabFacturas() {
         observaciones: ''
     });
     const [filtroTipoDoc, setFiltroTipoDoc] = useState('');
-    const [lineas, setLineas]         = useState([{ ...LINE_EMPTY }]);
+    const [líneas, setLíneas]         = useState([{ ...LINE_EMPTY }]);
 
     // Modal detalle
     const [detalle, setDetalle]       = useState(null);
@@ -186,27 +186,27 @@ function TabFacturas() {
         setClientes(cl.data?.data || cl.data || []);
         setProductos(pr.data?.data || []);
         setForm({ cliente_id: '', tipo_documento: 'FACTURA', numero_factura: '', fecha_emision: new Date().toISOString().split('T')[0], observaciones: '' });
-        setLineas([{ ...LINE_EMPTY }]);
+        setLíneas([{ ...LINE_EMPTY }]);
         setShowModal(true);
     };
 
-    const handleLinea = (i, val) => setLineas(ls => ls.map((l, idx) => idx === i ? val : l));
-    const addLinea    = () => setLineas(ls => [...ls, { ...LINE_EMPTY }]);
-    const removeLinea = (i) => { if (lineas.length > 1) setLineas(ls => ls.filter((_, idx) => idx !== i)); };
+    const handleLinea = (i, val) => setLíneas(ls => ls.map((l, idx) => idx === i ? val : l));
+    const addLinea    = () => setLíneas(ls => [...ls, { ...LINE_EMPTY }]);
+    const removeLinea = (i) => { if (líneas.length > 1) setLíneas(ls => ls.filter((_, idx) => idx !== i)); };
 
-    const totalFactura = lineas.reduce((s, l) =>
+    const totalFactura = líneas.reduce((s, l) =>
         s + (Number(l.cantidad) * Number(l.precio_unitario) || 0), 0);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (lineas.some(l => !l.producto_id || !l.lote_id || !l.cantidad)) {
+        if (líneas.some(l => !l.producto_id || !l.lote_id || !l.cantidad)) {
             return toast.error('Completa todas las lÃ­neas: producto, lote y cantidad son obligatorios.');
         }
         setGuardando(true);
         try {
             await api.post('/facturas', {
                 ...form,
-                detalles: lineas.map(l => ({
+                detalles: líneas.map(l => ({
                     producto_id:    Number(l.producto_id),
                     lote_id:        Number(l.lote_id),
                     cantidad:       Number(l.cantidad),
@@ -303,7 +303,7 @@ function TabFacturas() {
                                         <FileText size={40} className="opacity-30" />
                                         <div>
                                             <p className="font-semibold text-slate-500">No hay facturas registradas</p>
-                                            <p className="text-xs mt-1">Crea la primera factura con el botÃ³n "Nueva Factura".</p>
+                                            <p className="text-xs mt-1">Crea la primera factura con el botón "Nueva Factura".</p>
                                         </div>
                                     </div>
                                 </td></tr>
@@ -345,7 +345,7 @@ function TabFacturas() {
                         </tbody>
                     </table>
                 </div>
-                {/* PaginaciÃ³n */}
+                {/* PáginaciÃ³n */}
                 <div className="px-5 py-3 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between">
                     <span className="text-xs text-slate-500">PÃ¡gina <b>{page}</b> de <b>{totalPages}</b></span>
                     <div className="flex gap-1.5">
@@ -392,7 +392,7 @@ function TabFacturas() {
                                 </div>
                                 <div className="sm:col-span-1">
                                     <label className="block text-xs font-semibold text-slate-600 mb-1.5">
-                                        <Calendar size={12} className="inline mr-1" />Fecha EmisiÃ³n
+                                        <Calendar size={12} className="inline mr-1" />Fecha Emisión
                                     </label>
                                     <input
                                         type="date" required value={form.fecha_emision}
@@ -446,8 +446,8 @@ function TabFacturas() {
                                     </button>
                                 </div>
                                 <div className="space-y-2">
-                                    {lineas.map((l, i) => (
-                                        <LineaDetalle key={i} index={i} linea={l} productos={productos}
+                                    {líneas.map((l, i) => (
+                                        <LineaDetalle key={i} index={i} línea={l} productos={productos}
                                             onChange={handleLinea} onRemove={removeLinea} />
                                     ))}
                                 </div>
@@ -536,7 +536,7 @@ function TabGuias() {
         fecha_emision: new Date().toISOString().split('T')[0],
         factura_id: '', destinatario: '', observaciones: ''
     });
-    const [lineas, setLineas]         = useState([{ ...LINE_EMPTY }]);
+    const [líneas, setLíneas]         = useState([{ ...LINE_EMPTY }]);
     const [detalle, setDetalle]       = useState(null);
 
     const fetchGuias = useCallback(async () => {
@@ -557,17 +557,17 @@ function TabGuias() {
             .catch(() => ({ data: { data: [] } }));
         setProductos(data.data || []);
         setForm({ tipo_guia: 'DESPACHO', numero_guia: '', fecha_emision: new Date().toISOString().split('T')[0], factura_id: '', destinatario: '', observaciones: '' });
-        setLineas([{ ...LINE_EMPTY }]);
+        setLíneas([{ ...LINE_EMPTY }]);
         setShowModal(true);
     };
 
-    const handleLinea = (i, val) => setLineas(ls => ls.map((l, idx) => idx === i ? val : l));
-    const addLinea    = () => setLineas(ls => [...ls, { ...LINE_EMPTY }]);
-    const removeLinea = (i) => { if (lineas.length > 1) setLineas(ls => ls.filter((_, idx) => idx !== i)); };
+    const handleLinea = (i, val) => setLíneas(ls => ls.map((l, idx) => idx === i ? val : l));
+    const addLinea    = () => setLíneas(ls => [...ls, { ...LINE_EMPTY }]);
+    const removeLinea = (i) => { if (líneas.length > 1) setLíneas(ls => ls.filter((_, idx) => idx !== i)); };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (lineas.some(l => !l.producto_id || !l.lote_id || !l.cantidad)) {
+        if (líneas.some(l => !l.producto_id || !l.lote_id || !l.cantidad)) {
             return toast.error('Completa todas las lÃ­neas: producto, lote y cantidad son obligatorios.');
         }
         setGuardando(true);
@@ -575,7 +575,7 @@ function TabGuias() {
             await api.post('/guias', {
                 ...form,
                 factura_id: form.factura_id || null,
-                detalles: lineas.map(l => ({
+                detalles: líneas.map(l => ({
                     producto_id:     Number(l.producto_id),
                     lote_id:         Number(l.lote_id),
                     cantidad:        Number(l.cantidad),
@@ -624,7 +624,7 @@ function TabGuias() {
                     >
                         <option value="">Todos los tipos</option>
                         <option value="DESPACHO">Despacho</option>
-                        <option value="REPOSICION">ReposiciÃ³n</option>
+                        <option value="REPOSICION">Reposición</option>
                     </select>
                     <button onClick={fetchGuias} className="p-2 text-slate-500 hover:text-indigo-600 border border-slate-200 rounded-xl bg-white">
                         <RefreshCw size={16} />
@@ -667,7 +667,7 @@ function TabGuias() {
                                         <Truck size={40} className="opacity-30" />
                                         <div>
                                             <p className="font-semibold text-slate-500">No hay guÃ­as registradas</p>
-                                            <p className="text-xs mt-1">Crea la primera guÃ­a con el botÃ³n "Nueva GuÃ­a".</p>
+                                            <p className="text-xs mt-1">Crea la primera guÃ­a con el botón "Nueva GuÃ­a".</p>
                                         </div>
                                     </div>
                                 </td></tr>
@@ -733,7 +733,7 @@ function TabGuias() {
                                     <Truck size={18} className="text-teal-600" />
                                 </div>
                                 <div>
-                                    <h2 className="text-base font-bold text-slate-800">Nueva GuÃ­a de RemisiÃ³n</h2>
+                                    <h2 className="text-base font-bold text-slate-800">Nueva GuÃ­a de Remisión</h2>
                                     <p className="text-xs text-slate-400">Tipo REPOSICION no requiere factura vinculada (R5-A)</p>
                                 </div>
                             </div>
@@ -764,7 +764,7 @@ function TabGuias() {
                                 {form.tipo_guia === 'REPOSICION' && (
                                     <p className="mt-2 text-xs text-sky-700 bg-sky-50 border border-sky-100 rounded-lg px-3 py-2">
                                         <AlertTriangle size={12} className="inline mr-1" />
-                                        GuÃ­a de correcciÃ³n por faltantes en entrega previa. La factura es opcional.
+                                        GuÃ­a de corrección por faltantes en entrega previa. La factura es opcional.
                                     </p>
                                 )}
                             </div>
@@ -801,7 +801,7 @@ function TabGuias() {
                                 <input type="text" value={form.destinatario}
                                     onChange={e => setForm(f => ({ ...f, destinatario: e.target.value }))}
                                     className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
-                                    placeholder="Nombre o razÃ³n social del destinatario" />
+                                    placeholder="Nombre o razón social del destinatario" />
                             </div>
 
                             {/* LÃ­neas de detalle */}
@@ -817,8 +817,8 @@ function TabGuias() {
                                     </button>
                                 </div>
                                 <div className="space-y-2">
-                                    {lineas.map((l, i) => (
-                                        <LineaDetalle key={i} index={i} linea={l} productos={productos}
+                                    {líneas.map((l, i) => (
+                                        <LineaDetalle key={i} index={i} línea={l} productos={productos}
                                             onChange={handleLinea} onRemove={removeLinea} />
                                     ))}
                                 </div>
@@ -895,7 +895,7 @@ function TabArchivos() {
                 <div className="py-16 text-center text-slate-400">
                     <Paperclip size={40} className="mx-auto mb-3 opacity-20" />
                     <p className="font-semibold text-slate-500">No hay archivos adjuntos</p>
-                    <p className="text-xs mt-1">Los documentos PDF y adjuntos aparecerÃ¡n aquÃ­.</p>
+                    <p className="text-xs mt-1">Los documentos PDF y adjuntos aparecerÃ¡n aquí­.</p>
                 </div>
             ) : (
                 <div className="divide-y divide-slate-100">
