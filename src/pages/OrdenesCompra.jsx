@@ -302,8 +302,8 @@ function DrawerNuevaOrden({ onClose, onSaved }) {
     const [proveedorId, setProveedorId] = useState('');
     const [proveedorNombre, setProveedorNombre] = useState('');
     const [fechaEmision, setFechaEmision] = useState(new Date().toISOString().split('T')[0]);
-    const [busquedaProd, setBusquedaProd] = useState('');
-    const [detalles, setDetalles] = useState([]); // { producto_id, nombre, cantidad, precio_unitario }
+    const [nuevoProd, setNuevoProd] = useState('');
+    const [detalles, setDetalles] = useState([]); // { producto_id, producto_nombre, cantidad, precio_unitario }
 
     useEffect(() => {
         const fetchData = async () => {
@@ -323,10 +323,19 @@ function DrawerNuevaOrden({ onClose, onSaved }) {
         fetchData();
     }, []);
 
-    const handleAddProd = (prod) => {
-        if (detalles.find(d => d.producto_id === prod.id)) return;
-        setDetalles([...detalles, { producto_id: prod.id, nombre: prod.nombre, cantidad: 1, precio_unitario: prod.precio_costo || 0 }]);
-        setBusquedaProd('');
+    // Agregar producto por texto libre. Si el texto coincide con un producto del
+    // catálogo, se vincula su id; si no, se guarda solo el nombre (cotización).
+    const handleAddProdLibre = () => {
+        const nombre = nuevoProd.trim();
+        if (!nombre) return;
+        const match = productos.find(p => (p.nombre || '').toLowerCase() === nombre.toLowerCase());
+        setDetalles([...detalles, {
+            producto_id: match ? match.id : null,
+            producto_nombre: match ? match.nombre : nombre,
+            cantidad: 1,
+            precio_unitario: ''
+        }]);
+        setNuevoProd('');
     };
 
     const updateDetalle = (idx, field, val) => {
@@ -352,7 +361,8 @@ function DrawerNuevaOrden({ onClose, onSaved }) {
                 proveedor_nombre: proveedorNombre.trim(),
                 fecha_emision: fechaEmision,
                 detalles: detalles.map(d => ({
-                    producto_id: d.producto_id,
+                    producto_id: d.producto_id || null,
+                    producto_nombre: d.producto_nombre || d.nombre || null,
                     cantidad: parseInt(d.cantidad),
                     precio_unitario: d.precio_unitario ? parseFloat(d.precio_unitario) : null
                 }))
@@ -365,8 +375,6 @@ function DrawerNuevaOrden({ onClose, onSaved }) {
             setSaving(false);
         }
     };
-
-    const filtrados = productos.filter(p => p.nombre.toLowerCase().includes(busquedaProd.toLowerCase()) || p.codigo.toLowerCase().includes(busquedaProd.toLowerCase())).slice(0, 5);
 
     return (
         <div className="fixed inset-0 z-50 flex justify-end">
@@ -414,36 +422,37 @@ function DrawerNuevaOrden({ onClose, onSaved }) {
                                 </div>
                             </div>
 
-                            {/* Buscador de Productos */}
+                            {/* Agregar Productos (texto libre) */}
                             <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
                                 <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Agregar Productos</label>
-                                <div className="relative">
-                                    <input 
-                                        type="text" placeholder="Buscar por código o nombre..." value={busquedaProd} onChange={e => setBusquedaProd(e.target.value)}
-                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:border-emerald-500 outline-none"
+                                <div className="flex gap-2">
+                                    <input
+                                        list="lista-productos-oc"
+                                        type="text"
+                                        placeholder="Escribe el producto y presiona Agregar..."
+                                        value={nuevoProd}
+                                        onChange={e => setNuevoProd(e.target.value)}
+                                        onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddProdLibre(); } }}
+                                        className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:border-emerald-500 outline-none"
                                     />
-                                    {busquedaProd && (
-                                        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg z-10 overflow-hidden">
-                                            {filtrados.length === 0 ? <div className="p-3 text-sm text-slate-500 text-center">No encontrado</div> : 
-                                                filtrados.map(p => (
-                                                    <button key={p.id} onClick={() => handleAddProd(p)} className="w-full text-left px-4 py-2 hover:bg-emerald-50 text-sm border-b border-slate-50 last:border-0 flex justify-between">
-                                                        <span className="font-semibold text-slate-800">{p.nombre}</span>
-                                                        <span className="text-emerald-600 font-mono text-xs">{p.codigo}</span>
-                                                    </button>
-                                                ))
-                                            }
-                                        </div>
-                                    )}
+                                    <button type="button" onClick={handleAddProdLibre}
+                                        className="px-4 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700 transition-colors whitespace-nowrap">
+                                        Agregar
+                                    </button>
                                 </div>
+                                <datalist id="lista-productos-oc">
+                                    {productos.map(p => <option key={p.id} value={p.nombre}>{p.codigo}</option>)}
+                                </datalist>
+                                <p className="text-[11px] text-slate-400 mt-1">Texto libre; si coincide con un producto del catálogo se vincula automáticamente.</p>
                             </div>
 
                             {/* Lista de Detalles */}
                             <div className="space-y-3">
                                 <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Detalle de la Orden ({detalles.length})</p>
                                 {detalles.map((d, i) => (
-                                    <div key={d.producto_id} className="bg-white p-3 rounded-xl border border-emerald-100 shadow-sm relative group flex items-center gap-3">
+                                    <div key={i} className="bg-white p-3 rounded-xl border border-emerald-100 shadow-sm relative group flex items-center gap-3">
                                         <div className="flex-1">
-                                            <p className="text-sm font-bold text-slate-800 mb-2 truncate pr-6">{d.nombre}</p>
+                                            <p className="text-sm font-bold text-slate-800 mb-2 truncate pr-6">{d.producto_nombre || d.nombre}</p>
                                             <div className="flex gap-2">
                                                 <div>
                                                     <label className="text-[10px] text-slate-400 font-bold uppercase">Cant.</label>
