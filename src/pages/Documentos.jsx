@@ -1,14 +1,14 @@
 /**
  * src/pages/Documentos.jsx
- * Módulo central de documentos operativos:
- *   Tab 1 — Facturas (ventas a clientes)
- *   Tab 2 — Guías de Remisión (despacho / reposición)
- *   Tab 3 — Archivos adjuntos
+ * MÃ³dulo central de documentos operativos:
+ *   Tab 1 â€” Facturas (ventas a clientes)
+ *   Tab 2 â€” GuÃ­as de RemisiÃ³n (despacho / reposiciÃ³n)
+ *   Tab 3 â€” Archivos adjuntos
  *
  * Reglas de negocio aplicadas:
- *   R1  — precio_unitario ingresado manualmente por transacción
- *   R3  — una guía puede tener múltiples lotes (multi-línea)
- *   R5A — guías de tipo REPOSICION no requieren factura vinculada
+ *   R1  â€” precio_unitario ingresado manualmente por transacciÃ³n
+ *   R3  â€” una guÃ­a puede tener mÃºltiples lotes (multi-lÃ­nea)
+ *   R5A â€” guÃ­as de tipo REPOSICION no requieren factura vinculada
  */
 import React, { useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
@@ -21,10 +21,10 @@ import {
     Clock, DollarSign, Hash, Calendar, User
 } from 'lucide-react';
 
-// ── Helpers ─────────────────────────────────────────────────────────────────
+// â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const formatFecha = (d) =>
-    d ? new Date(d).toLocaleDateString('es-PE', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
+    d ? new Date(d).toLocaleDateString('es-PE', { day: '2-digit', month: 'short', year: 'numeric' }) : 'â€”';
 
 const formatSoles = (v) =>
     new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(Number(v) || 0);
@@ -52,7 +52,7 @@ function StatusBadge({ estado, map }) {
     );
 }
 
-// ── Línea de detalle (producto + lote + cantidad + precio) ───────────────────
+// â”€â”€ LÃ­nea de detalle (producto + lote + cantidad + precio) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function LineaDetalle({ index, linea, productos, onChange, onRemove }) {
     const [lotes, setLotes] = useState([]);
 
@@ -98,7 +98,7 @@ function LineaDetalle({ index, linea, productos, onChange, onRemove }) {
                     <option value="">Seleccionar lote...</option>
                     {lotes.filter(l => Number(l.stock_actual ?? l.cantidad_producida) > 0).map(l => (
                         <option key={l.id} value={l.id}>
-                            {l.numero_lote || l.codigo_lote} · Stock: {Number(l.stock_actual ?? l.cantidad_producida).toFixed(2)}
+                            {l.numero_lote || l.codigo_lote} Â· Stock: {Number(l.stock_actual ?? l.cantidad_producida).toFixed(2)}
                         </option>
                     ))}
                 </select>
@@ -125,7 +125,7 @@ function LineaDetalle({ index, linea, productos, onChange, onRemove }) {
                     placeholder="0.00"
                 />
             </div>
-            {/* Eliminar línea */}
+            {/* Eliminar lÃ­nea */}
             <div className={`col-span-1 flex ${index === 0 ? 'mt-5' : ''} justify-center`}>
                 <button type="button" onClick={() => onRemove(index)}
                     className="p-1.5 text-slate-300 hover:text-rose-500 transition-colors rounded-lg hover:bg-rose-50">
@@ -138,9 +138,9 @@ function LineaDetalle({ index, linea, productos, onChange, onRemove }) {
 
 const LINE_EMPTY = { producto_id: '', lote_id: '', cantidad: '', precio_unitario: '' };
 
-// ════════════════════════════════════════════════════════════════════════════
-// TAB 1 — FACTURAS
-// ════════════════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// TAB 1 â€” FACTURAS
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 function TabFacturas() {
     const { isAdmin } = useAuth();
     const [facturas, setFacturas]     = useState([]);
@@ -200,7 +200,7 @@ function TabFacturas() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (lineas.some(l => !l.producto_id || !l.lote_id || !l.cantidad)) {
-            return toast.error('Completa todas las líneas: producto, lote y cantidad son obligatorios.');
+            return toast.error('Completa todas las lÃ­neas: producto, lote y cantidad son obligatorios.');
         }
         setGuardando(true);
         try {
@@ -239,7 +239,7 @@ function TabFacturas() {
                     <div className="relative flex-1 min-w-[200px]">
                         <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                         <input
-                            type="text" placeholder="Buscar por N° factura o cliente..."
+                            type="text" placeholder="Buscar por NÂ° factura o cliente..."
                             value={busqueda} onChange={e => { setBusqueda(e.target.value); setPage(1); }}
                             className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                         />
@@ -280,7 +280,7 @@ function TabFacturas() {
                     <table className="w-full text-sm text-left whitespace-nowrap">
                         <thead className="bg-slate-50 border-b border-slate-100 text-slate-500 text-xs uppercase tracking-wider">
                             <tr>
-                                <th className="px-5 py-3.5 font-semibold">N° Documento</th>
+                                <th className="px-5 py-3.5 font-semibold">NÂ° Documento</th>
                                 <th className="px-5 py-3.5 font-semibold">Tipo</th>
                                 <th className="px-5 py-3.5 font-semibold">Cliente</th>
                                 <th className="px-5 py-3.5 font-semibold">Fecha</th>
@@ -303,7 +303,7 @@ function TabFacturas() {
                                         <FileText size={40} className="opacity-30" />
                                         <div>
                                             <p className="font-semibold text-slate-500">No hay facturas registradas</p>
-                                            <p className="text-xs mt-1">Crea la primera factura con el botón "Nueva Factura".</p>
+                                            <p className="text-xs mt-1">Crea la primera factura con el botÃ³n "Nueva Factura".</p>
                                         </div>
                                     </div>
                                 </td></tr>
@@ -318,7 +318,7 @@ function TabFacturas() {
                                         </span>
                                     </td>
                                     <td className="px-5 py-3.5">
-                                        <p className="font-medium text-slate-800">{f.Cliente?.razon_social || f.Cliente?.nombre || '—'}</p>
+                                        <p className="font-medium text-slate-800">{f.Cliente?.razon_social || f.Cliente?.nombre || 'â€”'}</p>
                                         <p className="text-[11px] text-slate-400">{f.Cliente?.ruc || ''}</p>
                                     </td>
                                     <td className="px-5 py-3.5 text-slate-500 text-xs">{formatFecha(f.fecha_emision)}</td>
@@ -345,9 +345,9 @@ function TabFacturas() {
                         </tbody>
                     </table>
                 </div>
-                {/* Paginación */}
+                {/* PaginaciÃ³n */}
                 <div className="px-5 py-3 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between">
-                    <span className="text-xs text-slate-500">Página <b>{page}</b> de <b>{totalPages}</b></span>
+                    <span className="text-xs text-slate-500">PÃ¡gina <b>{page}</b> de <b>{totalPages}</b></span>
                     <div className="flex gap-1.5">
                         <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
                             className="p-1.5 border border-slate-200 rounded-lg disabled:opacity-40 hover:bg-white transition-colors"><ChevronLeft size={15} /></button>
@@ -357,7 +357,7 @@ function TabFacturas() {
                 </div>
             </div>
 
-            {/* ── MODAL NUEVA FACTURA ────────────────────────────────────── */}
+            {/* â”€â”€ MODAL NUEVA FACTURA â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
             {showModal && (
                 <div className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-10 overflow-y-auto">
                     <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={() => setShowModal(false)} />
@@ -381,7 +381,7 @@ function TabFacturas() {
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                 <div className="sm:col-span-1">
                                     <label className="block text-xs font-semibold text-slate-600 mb-1.5">
-                                        <Hash size={12} className="inline mr-1" />N° Factura
+                                        <Hash size={12} className="inline mr-1" />NÂ° Factura
                                     </label>
                                     <input
                                         type="text" value={form.numero_factura}
@@ -392,7 +392,7 @@ function TabFacturas() {
                                 </div>
                                 <div className="sm:col-span-1">
                                     <label className="block text-xs font-semibold text-slate-600 mb-1.5">
-                                        <Calendar size={12} className="inline mr-1" />Fecha Emisión
+                                        <Calendar size={12} className="inline mr-1" />Fecha EmisiÃ³n
                                     </label>
                                     <input
                                         type="date" required value={form.fecha_emision}
@@ -411,7 +411,7 @@ function TabFacturas() {
                                     >
                                         <option value="">Seleccionar cliente...</option>
                                         {clientes.map(c => (
-                                            <option key={c.id} value={c.id}>{c.razon_social || c.nombre} {c.ruc ? `· ${c.ruc}` : ''}</option>
+                                            <option key={c.id} value={c.id}>{c.razon_social || c.nombre} {c.ruc ? `Â· ${c.ruc}` : ''}</option>
                                         ))}
                                     </select>
                                 </div>
@@ -433,16 +433,16 @@ function TabFacturas() {
                                 </div>
                             </div>
 
-                            {/* Líneas de detalle */}
+                            {/* LÃ­neas de detalle */}
                             <div>
                                 <div className="flex items-center justify-between mb-3">
                                     <p className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                                        <Package size={15} /> Líneas de Detalle
+                                        <Package size={15} /> LÃ­neas de Detalle
                                         <span className="text-xs font-normal text-slate-400">(multi-lote R3)</span>
                                     </p>
                                     <button type="button" onClick={addLinea}
                                         className="flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition-colors">
-                                        <Plus size={13} /> Añadir línea
+                                        <Plus size={13} /> AÃ±adir lÃ­nea
                                     </button>
                                 </div>
                                 <div className="space-y-2">
@@ -490,7 +490,7 @@ function TabFacturas() {
                 </div>
             )}
 
-            {/* ── MODAL DETALLE ─────────────────────────────────────────── */}
+            {/* â”€â”€ MODAL DETALLE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
             {detalle && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={() => setDetalle(null)} />
@@ -500,8 +500,8 @@ function TabFacturas() {
                             <button onClick={() => setDetalle(null)} className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100"><X size={18} /></button>
                         </div>
                         <div className="space-y-3 text-sm text-slate-600">
-                            <div className="flex justify-between"><span className="font-semibold">N° Factura</span><span className="font-mono text-indigo-600">{detalle.data.numero_factura || `FAC-${String(detalle.data.id).padStart(5,'0')}`}</span></div>
-                            <div className="flex justify-between"><span className="font-semibold">Cliente</span><span>{detalle.data.Cliente?.razon_social || '—'}</span></div>
+                            <div className="flex justify-between"><span className="font-semibold">NÂ° Factura</span><span className="font-mono text-indigo-600">{detalle.data.numero_factura || `FAC-${String(detalle.data.id).padStart(5,'0')}`}</span></div>
+                            <div className="flex justify-between"><span className="font-semibold">Cliente</span><span>{detalle.data.Cliente?.razon_social || 'â€”'}</span></div>
                             <div className="flex justify-between"><span className="font-semibold">Fecha</span><span>{formatFecha(detalle.data.fecha_emision)}</span></div>
                             <div className="flex justify-between"><span className="font-semibold">Estado</span><StatusBadge estado={detalle.data.estado || 'BORRADOR'} map={BADGE_FACTURA} /></div>
                             <div className="flex justify-between"><span className="font-semibold">Total</span><span className="font-bold text-indigo-700">{formatSoles(detalle.data.total || 0)}</span></div>
@@ -515,9 +515,9 @@ function TabFacturas() {
     );
 }
 
-// ════════════════════════════════════════════════════════════════════════════
-// TAB 2 — GUÍAS DE REMISIÓN
-// ════════════════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// TAB 2 â€” GUÃAS DE REMISIÃ“N
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 function TabGuias() {
     const { isAdmin } = useAuth();
     const [guias, setGuias]           = useState([]);
@@ -527,7 +527,7 @@ function TabGuias() {
     const [busqueda, setBusqueda]     = useState('');
     const [filtroTipo, setFiltroTipo] = useState('');
 
-    // Modal nueva guía
+    // Modal nueva guÃ­a
     const [showModal, setShowModal]   = useState(false);
     const [productos, setProductos]   = useState([]);
     const [guardando, setGuardando]   = useState(false);
@@ -568,7 +568,7 @@ function TabGuias() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (lineas.some(l => !l.producto_id || !l.lote_id || !l.cantidad)) {
-            return toast.error('Completa todas las líneas: producto, lote y cantidad son obligatorios.');
+            return toast.error('Completa todas las lÃ­neas: producto, lote y cantidad son obligatorios.');
         }
         setGuardando(true);
         try {
@@ -582,18 +582,18 @@ function TabGuias() {
                     precio_unitario: l.precio_unitario !== '' ? Number(l.precio_unitario) : null,
                 }))
             });
-            toast.success('Guía de remisión creada correctamente');
+            toast.success('GuÃ­a de remisiÃ³n creada correctamente');
             setShowModal(false);
             fetchGuias();
         } catch (err) {
-            toast.error(err.response?.data?.error || 'Error al crear la guía');
+            toast.error(err.response?.data?.error || 'Error al crear la guÃ­a');
         } finally { setGuardando(false); }
     };
 
     const handleAnular = async (g) => {
         try {
             await api.patch(`/guias/${g.id}/anular`, { motivo: 'Anulada por usuario' });
-            toast.success('Guía anulada');
+            toast.success('GuÃ­a anulada');
             fetchGuias();
         } catch (err) {
             toast.error(err.response?.data?.error || 'Error al anular');
@@ -613,7 +613,7 @@ function TabGuias() {
                     <div className="relative flex-1 min-w-[200px]">
                         <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                         <input
-                            type="text" placeholder="Buscar por N° guía o destinatario..."
+                            type="text" placeholder="Buscar por NÂ° guÃ­a o destinatario..."
                             value={busqueda} onChange={e => { setBusqueda(e.target.value); setPage(1); }}
                             className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                         />
@@ -624,7 +624,7 @@ function TabGuias() {
                     >
                         <option value="">Todos los tipos</option>
                         <option value="DESPACHO">Despacho</option>
-                        <option value="REPOSICION">Reposición</option>
+                        <option value="REPOSICION">ReposiciÃ³n</option>
                     </select>
                     <button onClick={fetchGuias} className="p-2 text-slate-500 hover:text-indigo-600 border border-slate-200 rounded-xl bg-white">
                         <RefreshCw size={16} />
@@ -633,7 +633,7 @@ function TabGuias() {
                 {isAdmin() && (
                     <button onClick={abrirModal}
                         className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white text-sm font-semibold rounded-xl hover:bg-teal-700 shadow-sm transition-all whitespace-nowrap">
-                        <Plus size={16} /> Nueva Guía
+                        <Plus size={16} /> Nueva GuÃ­a
                     </button>
                 )}
             </div>
@@ -644,7 +644,7 @@ function TabGuias() {
                     <table className="w-full text-sm text-left whitespace-nowrap">
                         <thead className="bg-slate-50 border-b border-slate-100 text-slate-500 text-xs uppercase tracking-wider">
                             <tr>
-                                <th className="px-5 py-3.5 font-semibold">N° Guía</th>
+                                <th className="px-5 py-3.5 font-semibold">NÂ° GuÃ­a</th>
                                 <th className="px-5 py-3.5 font-semibold">Tipo</th>
                                 <th className="px-5 py-3.5 font-semibold">Destinatario</th>
                                 <th className="px-5 py-3.5 font-semibold">Fecha</th>
@@ -658,7 +658,7 @@ function TabGuias() {
                                 <tr><td colSpan={7} className="py-16 text-center text-slate-400">
                                     <div className="flex flex-col items-center gap-2">
                                         <RefreshCw size={20} className="animate-spin text-teal-400" />
-                                        <span className="text-sm">Cargando guías...</span>
+                                        <span className="text-sm">Cargando guÃ­as...</span>
                                     </div>
                                 </td></tr>
                             ) : guias.length === 0 ? (
@@ -666,8 +666,8 @@ function TabGuias() {
                                     <div className="flex flex-col items-center gap-3 text-slate-400">
                                         <Truck size={40} className="opacity-30" />
                                         <div>
-                                            <p className="font-semibold text-slate-500">No hay guías registradas</p>
-                                            <p className="text-xs mt-1">Crea la primera guía con el botón "Nueva Guía".</p>
+                                            <p className="font-semibold text-slate-500">No hay guÃ­as registradas</p>
+                                            <p className="text-xs mt-1">Crea la primera guÃ­a con el botÃ³n "Nueva GuÃ­a".</p>
                                         </div>
                                     </div>
                                 </td></tr>
@@ -681,7 +681,7 @@ function TabGuias() {
                                             {g.tipo_guia}
                                         </span>
                                     </td>
-                                    <td className="px-5 py-3.5 text-slate-700">{g.destinatario || '—'}</td>
+                                    <td className="px-5 py-3.5 text-slate-700">{g.destinatario || 'â€”'}</td>
                                     <td className="px-5 py-3.5 text-slate-500 text-xs">{formatFecha(g.fecha_emision)}</td>
                                     <td className="px-5 py-3.5 text-xs">
                                         {g.Factura
@@ -712,7 +712,7 @@ function TabGuias() {
                     </table>
                 </div>
                 <div className="px-5 py-3 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between">
-                    <span className="text-xs text-slate-500">Página <b>{page}</b> de <b>{totalPages}</b></span>
+                    <span className="text-xs text-slate-500">PÃ¡gina <b>{page}</b> de <b>{totalPages}</b></span>
                     <div className="flex gap-1.5">
                         <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
                             className="p-1.5 border border-slate-200 rounded-lg disabled:opacity-40 hover:bg-white transition-colors"><ChevronLeft size={15} /></button>
@@ -722,7 +722,7 @@ function TabGuias() {
                 </div>
             </div>
 
-            {/* ── MODAL NUEVA GUÍA ──────────────────────────────────────── */}
+            {/* â”€â”€ MODAL NUEVA GUÃA â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
             {showModal && (
                 <div className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-10 overflow-y-auto">
                     <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={() => setShowModal(false)} />
@@ -733,7 +733,7 @@ function TabGuias() {
                                     <Truck size={18} className="text-teal-600" />
                                 </div>
                                 <div>
-                                    <h2 className="text-base font-bold text-slate-800">Nueva Guía de Remisión</h2>
+                                    <h2 className="text-base font-bold text-slate-800">Nueva GuÃ­a de RemisiÃ³n</h2>
                                     <p className="text-xs text-slate-400">Tipo REPOSICION no requiere factura vinculada (R5-A)</p>
                                 </div>
                             </div>
@@ -741,9 +741,9 @@ function TabGuias() {
                         </div>
 
                         <form onSubmit={handleSubmit} className="p-6 space-y-5">
-                            {/* Tipo de guía */}
+                            {/* Tipo de guÃ­a */}
                             <div>
-                                <label className="block text-xs font-semibold text-slate-600 mb-2">Tipo de Guía *</label>
+                                <label className="block text-xs font-semibold text-slate-600 mb-2">Tipo de GuÃ­a *</label>
                                 <div className="flex gap-3">
                                     {['DESPACHO', 'REPOSICION'].map(tipo => (
                                         <label key={tipo}
@@ -764,7 +764,7 @@ function TabGuias() {
                                 {form.tipo_guia === 'REPOSICION' && (
                                     <p className="mt-2 text-xs text-sky-700 bg-sky-50 border border-sky-100 rounded-lg px-3 py-2">
                                         <AlertTriangle size={12} className="inline mr-1" />
-                                        Guía de corrección por faltantes en entrega previa. La factura es opcional.
+                                        GuÃ­a de correcciÃ³n por faltantes en entrega previa. La factura es opcional.
                                     </p>
                                 )}
                             </div>
@@ -772,7 +772,7 @@ function TabGuias() {
                             {/* Datos cabecera */}
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                 <div>
-                                    <label className="block text-xs font-semibold text-slate-600 mb-1.5"><Hash size={12} className="inline mr-1" />N° Guía</label>
+                                    <label className="block text-xs font-semibold text-slate-600 mb-1.5"><Hash size={12} className="inline mr-1" />NÂ° GuÃ­a</label>
                                     <input type="text" value={form.numero_guia}
                                         onChange={e => setForm(f => ({ ...f, numero_guia: e.target.value }))}
                                         className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
@@ -801,19 +801,19 @@ function TabGuias() {
                                 <input type="text" value={form.destinatario}
                                     onChange={e => setForm(f => ({ ...f, destinatario: e.target.value }))}
                                     className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
-                                    placeholder="Nombre o razón social del destinatario" />
+                                    placeholder="Nombre o razÃ³n social del destinatario" />
                             </div>
 
-                            {/* Líneas de detalle */}
+                            {/* LÃ­neas de detalle */}
                             <div>
                                 <div className="flex items-center justify-between mb-3">
                                     <p className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                                        <Package size={15} /> Líneas de Detalle
+                                        <Package size={15} /> LÃ­neas de Detalle
                                         <span className="text-xs font-normal text-slate-400">(multi-lote R3)</span>
                                     </p>
                                     <button type="button" onClick={addLinea}
                                         className="flex items-center gap-1.5 text-xs font-semibold text-teal-600 hover:text-teal-800 bg-teal-50 hover:bg-teal-100 px-3 py-1.5 rounded-lg transition-colors">
-                                        <Plus size={13} /> Añadir línea
+                                        <Plus size={13} /> AÃ±adir lÃ­nea
                                     </button>
                                 </div>
                                 <div className="space-y-2">
@@ -839,7 +839,7 @@ function TabGuias() {
                                 </button>
                                 <button type="submit" disabled={guardando}
                                     className="px-6 py-2.5 text-sm font-bold text-white bg-teal-600 hover:bg-teal-700 rounded-xl shadow-sm transition-all disabled:opacity-50 flex items-center gap-2">
-                                    {guardando ? <><RefreshCw size={14} className="animate-spin" /> Guardando...</> : <><CheckCircle size={14} /> Registrar Guía</>}
+                                    {guardando ? <><RefreshCw size={14} className="animate-spin" /> Guardando...</> : <><CheckCircle size={14} /> Registrar GuÃ­a</>}
                                 </button>
                             </div>
                         </form>
@@ -847,19 +847,19 @@ function TabGuias() {
                 </div>
             )}
 
-            {/* Modal detalle guía */}
+            {/* Modal detalle guÃ­a */}
             {detalle && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={() => setDetalle(null)} />
                     <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-lg p-6 animate-in fade-in zoom-in-95 duration-200">
                         <div className="flex items-center justify-between mb-5">
-                            <h3 className="text-base font-bold text-slate-800">Detalle de Guía</h3>
+                            <h3 className="text-base font-bold text-slate-800">Detalle de GuÃ­a</h3>
                             <button onClick={() => setDetalle(null)} className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100"><X size={18} /></button>
                         </div>
                         <div className="space-y-3 text-sm text-slate-600">
-                            <div className="flex justify-between"><span className="font-semibold">N° Guía</span><span className="font-mono text-teal-600">{detalle.numero_guia || `GR-${String(detalle.id).padStart(5,'0')}`}</span></div>
+                            <div className="flex justify-between"><span className="font-semibold">NÂ° GuÃ­a</span><span className="font-mono text-teal-600">{detalle.numero_guia || `GR-${String(detalle.id).padStart(5,'0')}`}</span></div>
                             <div className="flex justify-between"><span className="font-semibold">Tipo</span><span className={`px-2 py-0.5 rounded-full text-xs font-bold ${TIPO_BADGE[detalle.tipo_guia] || 'bg-slate-100 text-slate-600'}`}>{detalle.tipo_guia}</span></div>
-                            <div className="flex justify-between"><span className="font-semibold">Destinatario</span><span>{detalle.destinatario || '—'}</span></div>
+                            <div className="flex justify-between"><span className="font-semibold">Destinatario</span><span>{detalle.destinatario || 'â€”'}</span></div>
                             <div className="flex justify-between"><span className="font-semibold">Fecha</span><span>{formatFecha(detalle.fecha_emision)}</span></div>
                             <div className="flex justify-between"><span className="font-semibold">Estado</span><StatusBadge estado={detalle.estado || 'PENDIENTE'} map={BADGE_GUIA} /></div>
                             {detalle.observaciones && <div className="pt-2 border-t border-slate-100"><p className="text-xs text-slate-400">{detalle.observaciones}</p></div>}
@@ -872,9 +872,9 @@ function TabGuias() {
     );
 }
 
-// ════════════════════════════════════════════════════════════════════════════
-// TAB 3 — ARCHIVOS ADJUNTOS
-// ════════════════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// TAB 3 â€” ARCHIVOS ADJUNTOS
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 function TabArchivos() {
     const [docs, setDocs]   = useState([]);
     const [loading, setLoading] = useState(false);
@@ -895,7 +895,7 @@ function TabArchivos() {
                 <div className="py-16 text-center text-slate-400">
                     <Paperclip size={40} className="mx-auto mb-3 opacity-20" />
                     <p className="font-semibold text-slate-500">No hay archivos adjuntos</p>
-                    <p className="text-xs mt-1">Los documentos PDF y adjuntos aparecerán aquí.</p>
+                    <p className="text-xs mt-1">Los documentos PDF y adjuntos aparecerÃ¡n aquÃ­.</p>
                 </div>
             ) : (
                 <div className="divide-y divide-slate-100">
@@ -909,7 +909,7 @@ function TabArchivos() {
                             {d.url && (
                                 <a href={d.url} target="_blank" rel="noreferrer"
                                     className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition-colors">
-                                    Ver →
+                                    Ver â†’
                                 </a>
                             )}
                         </div>
@@ -920,55 +920,50 @@ function TabArchivos() {
     );
 }
 
-// ════════════════════════════════════════════════════════════════════════════
-// PÁGINA PRINCIPAL — DOCUMENTOS (navegación por pestañas)
-// ════════════════════════════════════════════════════════════════════════════
-const TABS_DOC = [
-    { id: 1, label: 'Facturas / Boletas', Icon: FileText },
-    { id: 2, label: 'Guías de Remisión', Icon: Truck },
-    { id: 3, label: 'Archivos', Icon: Paperclip },
-];
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â
 
 export default function Documentos() {
-    const [activeTab, setActiveTab] = useState(1);
+    const [activeTab, setActiveTab] = React.useState('facturas');
+
+    const tabs = [
+        { id: 'facturas', label: 'Facturas' },
+        { id: 'guias', label: 'Guías de Remisión' },
+        { id: 'archivos', label: 'Archivos Adjuntos' },
+    ];
 
     return (
-        <div className="p-6 max-w-7xl mx-auto">
-            {/* Encabezado */}
-            <div className="mb-6">
-                <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Documentos</h1>
-                <p className="text-sm text-slate-500 mt-1">
-                    Facturas, boletas, guías de remisión y archivos adjuntos
-                </p>
+        <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+            <div>
+                <h1 className="text-2xl font-black text-slate-800 tracking-tight">Documentos Operativos</h1>
+                <p className="text-sm text-slate-500 mt-1">Gestión de facturas, boletas, guías de remisión y comprobantes adjuntos.</p>
             </div>
 
-            {/* Pestañas */}
-            <div className="flex gap-1 mb-6 border-b border-slate-200">
-                {TABS_DOC.map(t => {
-                    const Icon = t.Icon;
-                    const active = activeTab === t.id;
+            {/* Tabs Navigation */}
+            <div className="flex space-x-1 bg-slate-100 p-1 rounded-xl w-fit">
+                {tabs.map(tab => {
+                    const isActive = activeTab === tab.id;
                     return (
                         <button
-                            key={t.id}
-                            onClick={() => setActiveTab(t.id)}
-                            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 -mb-px transition-colors ${
-                                active
-                                    ? 'border-indigo-600 text-indigo-600'
-                                    : 'border-transparent text-slate-500 hover:text-slate-700'
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id)}
+                            className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all ${
+                                isActive
+                                    ? 'bg-white text-indigo-700 shadow-sm'
+                                    : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'
                             }`}
                         >
-                            <Icon size={16} /> {t.label}
+                            {tab.label}
                         </button>
                     );
                 })}
             </div>
 
-            {/* Contenido */}
-            {activeTab === 1 && <TabFacturas />}
-            {activeTab === 2 && <TabGuias />}
-            {activeTab === 3 && <TabArchivos />}
+            {/* Tab Content */}
+            <div className="mt-6">
+                {activeTab === 'facturas' && <TabFacturas />}
+                {activeTab === 'guias' && <TabGuias />}
+                {activeTab === 'archivos' && <TabArchivos />}
+            </div>
         </div>
     );
 }
-
-// ═══════════════════════════════════════════════════════════════════════════�
