@@ -39,6 +39,18 @@ export default function Kardex() {
     const [factura, setFactura] = useState('');
     const [ordenCompra, setOrdenCompra] = useState('');
     const [mostrarReferencias, setMostrarReferencias] = useState(false);
+    // Listas para elegir factura/guía existentes en las referencias de auditoría
+    const [facturasRef, setFacturasRef] = useState([]);
+    const [guiasRef, setGuiasRef] = useState([]);
+
+    useEffect(() => {
+        api.get('/facturas', { params: { limit: 100 } })
+            .then(r => setFacturasRef(r.data?.data || []))
+            .catch(() => setFacturasRef([]));
+        api.get('/guias', { params: { limit: 100 } })
+            .then(r => setGuiasRef(r.data?.data || []))
+            .catch(() => setGuiasRef([]));
+    }, []);
 
     // ── ESTADOS TAB 2: HISTORIAL ──────────────────────────────────────────────
     const [historial, setHistorial] = useState([]);
@@ -496,11 +508,24 @@ export default function Kardex() {
                                             </div>
                                             <div>
                                                 <label className="block text-xs font-medium text-slate-600 mb-1">Factura</label>
-                                                <input value={factura} onChange={e => setFactura(e.target.value)} className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm focus:border-indigo-500" placeholder="Opcional" />
+                                                <select value={factura} onChange={e => setFactura(e.target.value)} className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm focus:border-indigo-500">
+                                                    <option value="">— Sin factura —</option>
+                                                    {facturasRef.map(f => {
+                                                        const label = `${f.tipo_documento || 'FACTURA'} ${f.numero_factura || `#${f.id}`}${f.Cliente?.razon_social ? ' · ' + f.Cliente.razon_social : ''}`;
+                                                        const val = f.numero_factura || `#${f.id}`;
+                                                        return <option key={f.id} value={val}>{label}</option>;
+                                                    })}
+                                                </select>
                                             </div>
                                             <div>
                                                 <label className="block text-xs font-medium text-slate-600 mb-1">Guía Remisión</label>
-                                                <input value={guia} onChange={e => setGuia(e.target.value)} className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm focus:border-indigo-500" placeholder="Opcional" />
+                                                <select value={guia} onChange={e => setGuia(e.target.value)} className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm focus:border-indigo-500">
+                                                    <option value="">— Sin guía —</option>
+                                                    {guiasRef.map(g => {
+                                                        const val = g.numero_guia || `GR-${String(g.id).padStart(5, '0')}`;
+                                                        return <option key={g.id} value={val}>{`${g.tipo_guia || 'DESPACHO'} ${val}`}</option>;
+                                                    })}
+                                                </select>
                                             </div>
                                         </div>
                                     )}

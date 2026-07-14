@@ -55,22 +55,42 @@ function ModalDespacho({ pedido, onClose, onDespachado }) {
     const [loading, setLoading]     = useState(false);
     const [error, setError]         = useState(null);
 
-    // Parsear los productos del carrito cotizado
+    // Parsear los productos del carrito cotizado y pre-cargar el precio sugerido.
+    // El precio base lo configura el ingeniero de ventas en el producto
+    // (Producto.precio_unitario); aquí se muestra como sugerencia EDITABLE por cliente.
     useEffect(() => {
-        if (pedido.productos_cotizados) {
-            try {
-                const parsed = JSON.parse(pedido.productos_cotizados);
-                setProductos(parsed.map(p => ({ 
-                    ...p, 
-                    precio_unitario: '',
-                    lote_id: p.lote_id || null, // Capturar lote_id si viene de la web
-                    lote_num: p.lote_num || null
-                })));
-            } catch {
-                setProductos([]);
-            }
-
+        if (!pedido.productos_cotizados) return;
+        let parsed = [];
+        try {
+            parsed = JSON.parse(pedido.productos_cotizados);
+        } catch {
+            setProductos([]);
+            return;
         }
+
+        // Inicializa con precio vacío; luego lo completamos con el sugerido del catálogo.
+        const base = parsed.map(p => ({
+            ...p,
+            precio_unitario: '',
+            lote_id: p.lote_id || null,
+            lote_num: p.lote_num || null
+        }));
+        setProductos(base);
+
+        // Traer los precios sugeridos del catálogo (fijados por el ingeniero de ventas).
+        api.get('/productos/catalogo')
+            .then(res => {
+                const mapa = {};
+                (res.data?.data || []).forEach(prod => {
+                    if (prod.precio_unitario != null) mapa[prod.id] = String(prod.precio_unitario);
+                });
+                setProductos(prev => prev.map(p => ({
+                    ...p,
+                    // Solo sugerimos si el producto tiene precio configurado (> 0)
+                    precio_unitario: mapa[p.id] && parseFloat(mapa[p.id]) > 0 ? mapa[p.id] : p.precio_unitario
+                })));
+            })
+            .catch(() => { /* si falla el catálogo, se deja el precio en blanco para ingreso manual */ });
     }, [pedido]);
 
     const updatePrecio = (idx, val) => {
@@ -94,32 +114,25 @@ function ModalDespacho({ pedido, onClose, onDespachado }) {
 
         setLoading(true);
         try {
-            // 1. Cambiar estado a ATENDIDO (esto dispara el email automático al cliente)
-            await api.put(`/pedidos-web/${pedido.id}/estado`, { estado: 'ATENDIDO' });
-
-            // 2. Si tiene productos cotizados, registrar salidas de Kardex
-            if (productos.length > 0) {
-                for (const prod of productos) {
-                    try {
-                        await api.post('/kardex/despacho-web', {
-                            producto_id:     prod.id,
-                            cantidad:        prod.cantidad,
-                            precio_unitario: parseFloat(prod.precio_unitario),
-                            motivo:          `Despacho pedido web #REQ-${String(pedido.id).padStart(4,'0')} — ${pedido.nombre_completo} / ${pedido.entidad || ''}`,
-                            referencia_id:   pedido.id,
-                            lote_id:         prod.lote_id // Pasamos el lote_id guardado en el ítem
-                        });
-
-                    } catch (e) {
-                        console.warn(`Kardex para producto ${prod.id}:`, e.response?.data?.error || e.message);
-                    }
-                }
-            }
+            // Despacho consolidado en el backend (transacción única):
+            // crea/vincula el Cliente, registra las salidas de kardex (bloqueando
+            // lotes vencidos), genera la Factura/Boleta + Guía y marca ATENDIDO.
+            await api.post(`/pedidos-web/${pedido.id}/despachar`, {
+                tipo_documento: tipoDoc,             // 'FACTURA' | 'BOLETA'
+                generar_guia: true,
+                productos: productos.map(p => ({
+                    producto_id: p.id,
+                    cantidad: p.cantidad,
+                    precio_unitario: parseFloat(p.precio_unitario),
+                    lote_id: p.lote_id
+                }))
+            });
 
             onDespachado();
             onClose();
         } catch (e) {
-            setError('Error al procesar el despacho: ' + (e.response?.data?.error || e.message));
+            // El backend devuelve 409 con el detalle del lote vencido/rechazado.
+            setError(e.response?.data?.error || ('Error al procesar el despacho: ' + e.message));
         } finally {
             setLoading(false);
         }
@@ -153,7 +166,7 @@ function ModalDespacho({ pedido, onClose, onDespachado }) {
                     {error && (
                         <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm flex items-start gap-2">
                             <AlertCircle size={16} className="mt-0.5 flex-shrink-0" />
-                            {error}
+                            <span className="whitespace-pre-line">{error}</span>
                         </div>
                     )}
 
@@ -287,6 +300,7 @@ function DrawerNuevaOrden({ onClose, onSaved }) {
     
     // Formulario
     const [proveedorId, setProveedorId] = useState('');
+    const [proveedorNombre, setProveedorNombre] = useState('');
     const [fechaEmision, setFechaEmision] = useState(new Date().toISOString().split('T')[0]);
     const [busquedaProd, setBusquedaProd] = useState('');
     const [detalles, setDetalles] = useState([]); // { producto_id, nombre, cantidad, precio_unitario }
@@ -328,18 +342,19 @@ function DrawerNuevaOrden({ onClose, onSaved }) {
     const total = detalles.reduce((acc, d) => acc + (parseFloat(d.precio_unitario) || 0) * (parseInt(d.cantidad) || 0), 0);
 
     const handleSave = async () => {
-        if (!proveedorId) return alert('Selecciona un proveedor');
+        if (!proveedorNombre.trim()) return alert('Indica el proveedor');
         if (detalles.length === 0) return alert('Agrega al menos un producto');
-        
+
         try {
             setSaving(true);
+            // Total opcional: la orden es una cotización al proveedor.
             await api.post('/ordenes', {
-                proveedor_id: proveedorId,
+                proveedor_nombre: proveedorNombre.trim(),
                 fecha_emision: fechaEmision,
                 detalles: detalles.map(d => ({
                     producto_id: d.producto_id,
                     cantidad: parseInt(d.cantidad),
-                    precio_unitario: parseFloat(d.precio_unitario)
+                    precio_unitario: d.precio_unitario ? parseFloat(d.precio_unitario) : null
                 }))
             });
             onSaved();
@@ -378,13 +393,17 @@ function DrawerNuevaOrden({ onClose, onSaved }) {
                             <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-4">
                                 <div>
                                     <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Proveedor</label>
-                                    <select 
-                                        value={proveedorId} onChange={e => setProveedorId(e.target.value)}
+                                    <input
+                                        list="lista-proveedores"
+                                        value={proveedorNombre}
+                                        onChange={e => setProveedorNombre(e.target.value)}
+                                        placeholder="Escribe el nombre del proveedor..."
                                         className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none"
-                                    >
-                                        <option value="">-- Seleccionar Proveedor --</option>
-                                        {proveedores.map(p => <option key={p.id} value={p.id}>{p.razon_social} ({p.ruc})</option>)}
-                                    </select>
+                                    />
+                                    <datalist id="lista-proveedores">
+                                        {proveedores.map(p => <option key={p.id} value={p.razon_social}>{p.ruc}</option>)}
+                                    </datalist>
+                                    <p className="text-[11px] text-slate-400 mt-1">Texto libre. Si más adelante registras proveedores, aparecerán como sugerencias.</p>
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Fecha Emisión</label>

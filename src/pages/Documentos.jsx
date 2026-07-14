@@ -156,9 +156,10 @@ function TabFacturas() {
     const [productos, setProductos]   = useState([]);
     const [guardando, setGuardando]   = useState(false);
     const [form, setForm]             = useState({
-        cliente_id: '', numero_factura: '', fecha_emision: new Date().toISOString().split('T')[0],
+        cliente_id: '', tipo_documento: 'FACTURA', numero_factura: '', fecha_emision: new Date().toISOString().split('T')[0],
         observaciones: ''
     });
+    const [filtroTipoDoc, setFiltroTipoDoc] = useState('');
     const [lineas, setLineas]         = useState([{ ...LINE_EMPTY }]);
 
     // Modal detalle
@@ -168,12 +169,12 @@ function TabFacturas() {
         try {
             setLoading(true);
             const { data } = await api.get('/facturas', {
-                params: { page, limit: 12, busqueda, estado: filtroEstado || undefined }
+                params: { page, limit: 12, busqueda, estado: filtroEstado || undefined, tipo_documento: filtroTipoDoc || undefined }
             }).catch(() => ({ data: { data: [], totalPages: 1 } }));
             setFacturas(data.data || []);
             setTotalPages(data.totalPages || 1);
         } finally { setLoading(false); }
-    }, [page, busqueda, filtroEstado]);
+    }, [page, busqueda, filtroEstado, filtroTipoDoc]);
 
     useEffect(() => { fetchFacturas(); }, [fetchFacturas]);
 
@@ -184,7 +185,7 @@ function TabFacturas() {
         ]);
         setClientes(cl.data?.data || cl.data || []);
         setProductos(pr.data?.data || []);
-        setForm({ cliente_id: '', numero_factura: '', fecha_emision: new Date().toISOString().split('T')[0], observaciones: '' });
+        setForm({ cliente_id: '', tipo_documento: 'FACTURA', numero_factura: '', fecha_emision: new Date().toISOString().split('T')[0], observaciones: '' });
         setLineas([{ ...LINE_EMPTY }]);
         setShowModal(true);
     };
@@ -244,6 +245,14 @@ function TabFacturas() {
                         />
                     </div>
                     <select
+                        value={filtroTipoDoc} onChange={e => { setFiltroTipoDoc(e.target.value); setPage(1); }}
+                        className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 min-w-[130px]"
+                    >
+                        <option value="">Factura y Boleta</option>
+                        <option value="FACTURA">Solo Facturas</option>
+                        <option value="BOLETA">Solo Boletas</option>
+                    </select>
+                    <select
                         value={filtroEstado} onChange={e => { setFiltroEstado(e.target.value); setPage(1); }}
                         className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 min-w-[140px]"
                     >
@@ -271,7 +280,8 @@ function TabFacturas() {
                     <table className="w-full text-sm text-left whitespace-nowrap">
                         <thead className="bg-slate-50 border-b border-slate-100 text-slate-500 text-xs uppercase tracking-wider">
                             <tr>
-                                <th className="px-5 py-3.5 font-semibold">N° Factura</th>
+                                <th className="px-5 py-3.5 font-semibold">N° Documento</th>
+                                <th className="px-5 py-3.5 font-semibold">Tipo</th>
                                 <th className="px-5 py-3.5 font-semibold">Cliente</th>
                                 <th className="px-5 py-3.5 font-semibold">Fecha</th>
                                 <th className="px-5 py-3.5 font-semibold text-right">Total</th>
@@ -281,14 +291,14 @@ function TabFacturas() {
                         </thead>
                         <tbody className="divide-y divide-slate-50">
                             {loading ? (
-                                <tr><td colSpan={6} className="py-16 text-center text-slate-400">
+                                <tr><td colSpan={7} className="py-16 text-center text-slate-400">
                                     <div className="flex flex-col items-center gap-2">
                                         <RefreshCw size={20} className="animate-spin text-indigo-400" />
                                         <span className="text-sm">Cargando facturas...</span>
                                     </div>
                                 </td></tr>
                             ) : facturas.length === 0 ? (
-                                <tr><td colSpan={6} className="py-16 text-center">
+                                <tr><td colSpan={7} className="py-16 text-center">
                                     <div className="flex flex-col items-center gap-3 text-slate-400">
                                         <FileText size={40} className="opacity-30" />
                                         <div>
@@ -300,7 +310,12 @@ function TabFacturas() {
                             ) : facturas.map(f => (
                                 <tr key={f.id} className="hover:bg-slate-50/70 transition-colors group">
                                     <td className="px-5 py-3.5">
-                                        <span className="font-mono font-bold text-indigo-600 text-xs">{f.numero_factura || `FAC-${String(f.id).padStart(5, '0')}`}</span>
+                                        <span className="font-mono font-bold text-indigo-600 text-xs">{f.numero_factura || `${(f.tipo_documento || 'FAC').slice(0,3)}-${String(f.id).padStart(5, '0')}`}</span>
+                                    </td>
+                                    <td className="px-5 py-3.5">
+                                        <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${f.tipo_documento === 'BOLETA' ? 'bg-amber-100 text-amber-700' : 'bg-indigo-100 text-indigo-700'}`}>
+                                            {f.tipo_documento || 'FACTURA'}
+                                        </span>
                                     </td>
                                     <td className="px-5 py-3.5">
                                         <p className="font-medium text-slate-800">{f.Cliente?.razon_social || f.Cliente?.nombre || '—'}</p>
@@ -399,6 +414,22 @@ function TabFacturas() {
                                             <option key={c.id} value={c.id}>{c.razon_social || c.nombre} {c.ruc ? `· ${c.ruc}` : ''}</option>
                                         ))}
                                     </select>
+                                </div>
+                                <div className="sm:col-span-1">
+                                    <label className="block text-xs font-semibold text-slate-600 mb-1.5">Tipo de documento</label>
+                                    <div className="flex gap-2">
+                                        {['FACTURA', 'BOLETA'].map(t => (
+                                            <button type="button" key={t}
+                                                onClick={() => setForm(f => ({ ...f, tipo_documento: t }))}
+                                                className={`flex-1 rounded-xl px-3 py-2 text-sm font-semibold border transition-colors ${
+                                                    form.tipo_documento === t
+                                                        ? 'bg-indigo-600 text-white border-indigo-600'
+                                                        : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300'
+                                                }`}>
+                                                {t === 'FACTURA' ? 'Factura' : 'Boleta'}
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
                             </div>
 
@@ -889,55 +920,4 @@ function TabArchivos() {
     );
 }
 
-// ════════════════════════════════════════════════════════════════════════════
-// PÁGINA PRINCIPAL — DOCUMENTOS
-// ════════════════════════════════════════════════════════════════════════════
-const TABS = [
-    { id: 1, label: 'Facturas',          Icon: FileText,  color: 'text-indigo-600' },
-    { id: 2, label: 'Guías de Remisión', Icon: Truck,     color: 'text-teal-600'   },
-    { id: 3, label: 'Archivos',          Icon: Paperclip, color: 'text-slate-500'  },
-];
-
-export default function Documentos() {
-    const [activeTab, setActiveTab] = useState(1);
-
-    return (
-        <div className="min-h-screen bg-slate-50 p-6 font-sans">
-            <div className="max-w-7xl mx-auto space-y-6">
-
-                {/* Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-5">
-                    <div>
-                        <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Documentos</h1>
-                        <p className="text-sm text-slate-500 mt-1">Facturas, guías de remisión y archivos adjuntos.</p>
-                    </div>
-
-                    {/* Tabs */}
-                    <div className="flex gap-1 bg-slate-100 p-1 rounded-2xl">
-                        {TABS.map(({ id, label, Icon, color }) => (
-                            <button
-                                key={id}
-                                onClick={() => setActiveTab(id)}
-                                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-                                    activeTab === id
-                                        ? `bg-white shadow text-slate-800`
-                                        : 'text-slate-500 hover:text-slate-700'
-                                }`}
-                            >
-                                <Icon size={16} className={activeTab === id ? color : ''} />
-                                {label}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Contenido del tab activo */}
-                <div className="animate-in fade-in duration-200">
-                    {activeTab === 1 && <TabFacturas />}
-                    {activeTab === 2 && <TabGuias />}
-                    {activeTab === 3 && <TabArchivos />}
-                </div>
-            </div>
-        </div>
-    );
-}
+// ═══════════════════════════════════════════════════════════════════════════�
