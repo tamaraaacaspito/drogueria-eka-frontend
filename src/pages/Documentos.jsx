@@ -1,4 +1,4 @@
-﻿/**
+/**
  * src/pages/Documentos.jsx
  * MÃ³dulo central de documentos operativos:
  *   Tab 1 â€” Facturas (ventas a clientes)
@@ -946,7 +946,11 @@ export default function Documentos() {
                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
-                            className={lex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all }
+                            className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all ${
+                                isActive
+                                    ? 'bg-white text-indigo-700 shadow-sm'
+                                    : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'
+                            }`}
                         >
                             {tab.label}
                         </button>
