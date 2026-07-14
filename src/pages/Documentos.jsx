@@ -921,3 +921,45 @@ function TabArchivos() {
 }
 
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â
+
+export default function Documentos() {
+    const [activeTab, setActiveTab] = React.useState('facturas');
+
+    const tabs = [
+        { id: 'facturas', label: 'Facturas' },
+        { id: 'guias', label: 'Guías de Remisión' },
+        { id: 'archivos', label: 'Archivos Adjuntos' },
+    ];
+
+    return (
+        <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+            <div>
+                <h1 className="text-2xl font-black text-slate-800 tracking-tight">Documentos Operativos</h1>
+                <p className="text-sm text-slate-500 mt-1">Gestión de facturas, boletas, guías de remisión y comprobantes adjuntos.</p>
+            </div>
+
+            {/* Tabs Navigation */}
+            <div className="flex space-x-1 bg-slate-100 p-1 rounded-xl w-fit">
+                {tabs.map(tab => {
+                    const isActive = activeTab === tab.id;
+                    return (
+                        <button
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id)}
+                            className={lex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all }
+                        >
+                            {tab.label}
+                        </button>
+                    );
+                })}
+            </div>
+
+            {/* Tab Content */}
+            <div className="mt-6">
+                {activeTab === 'facturas' && <TabFacturas />}
+                {activeTab === 'guias' && <TabGuias />}
+                {activeTab === 'archivos' && <TabArchivos />}
+            </div>
+        </div>
+    );
+}
